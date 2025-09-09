@@ -1,36 +1,95 @@
-.form-container {
+.form-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 50px auto;
-  padding: 20px;
+  height: 100vh;
+  background-image: url("../assets/Background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.form-container {
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 40px 60px;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.158);
+  box-shadow: 0 4px 8px rgb(0, 0, 0);
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
 }
 
-.form-input {
-  width: 90%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
+.form-container h1 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 3rem;
+  padding-bottom: 20px;
 }
 
-.form-button {
-  width: 95%;
-  padding: 10px;
-  margin: 20px 0;
-  background-color: #007bff;
-  color: white;
+.form-container input {
+  width: 100%;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 100px;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0);
+  padding: 15px;
+  border-color: rgba(255, 255, 255, 0.247);
+  color: var(--text-color);
+}
+
+.form-container input:focus {
+  outline: none;
+}
+
+.form-container button {
+  width: 110%;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
   border: none;
-  border-radius: 4px;
+  border-radius: 100px;
+  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.3s ease;
 }
 
-.form-button:hover {
-  background-color: #0056b3;
+.form-container button:hover {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+.form-container p {
+  color: var(--text-color);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.form-container p a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.form-container p a:hover {
+  text-decoration: underline;
+}
+
+.form-header {
+  font-size: 6rem;
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-weight: bold;
+  position: absolute;
+  top: 8ch;
 }

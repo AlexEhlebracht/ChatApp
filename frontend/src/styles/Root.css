@@ -1,0 +1,15 @@
+:root {
+  --primary-color: #95d0e9;
+  --secondary-color: #1d2c89;
+  --accent-color: #584dda;
+  --background-color: #06161b;
+  --text-color: #e8f5fa;
+}
+
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  font-family: "Roboto", sans-serif;
+}
