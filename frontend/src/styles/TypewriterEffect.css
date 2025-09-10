@@ -1,0 +1,61 @@
+.form-header {
+  font-size: 6rem;
+  color: var(--text-color);
+  margin-bottom: 20px;
+  font-weight: bold;
+  position: absolute;
+  top: 8vh;
+  display: flex;
+  align-items: center;
+}
+
+.letter {
+  display: inline-block;
+  animation: fadeIn 0.2s ease-in forwards;
+}
+
+.cursor {
+  display: inline-block;
+  width: 3px;
+  height: 6rem;
+  background-color: var(--text-color);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-height: 850px) {
+  .form-header {
+    font-size: 4rem;
+    top: 4vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-header {
+    font-size: 4rem;
+  }
+  .cursor {
+    height: 4rem;
+  }
+}

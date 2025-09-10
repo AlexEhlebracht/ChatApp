@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CreateProfile from "./pages/CreateProfile";
 
 function Logout() {
   localStorage.clear();
@@ -25,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-profile"
+          element={
+            <ProtectedRoute>
+              <CreateProfile />
             </ProtectedRoute>
           }
         />

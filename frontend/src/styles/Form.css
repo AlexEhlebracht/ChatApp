@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100%;
   background-image: url("../assets/Background.jpg");
   background-size: cover;
   background-position: center;
@@ -11,7 +11,7 @@
 }
 
 .form-container {
-  background: rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.021);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 40px 60px;
@@ -23,9 +23,10 @@
   width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 30px;
   justify-content: center;
   align-items: center;
+  z-index: 2;
 }
 
 .form-container h1 {
@@ -49,6 +50,7 @@
 
 .form-container input:focus {
   outline: none;
+  border-color: rgba(255, 255, 255, 0.726);
 }
 
 .form-container button {
@@ -69,27 +71,315 @@
   color: var(--background-color);
 }
 
-.form-container p {
+.form-footer {
   color: var(--text-color);
   font-size: 0.9rem;
   margin: 0;
 }
 
-.form-container p a {
+.form-footer a {
   color: var(--link-color);
   text-decoration: none;
   font-weight: bold;
 }
 
-.form-container p a:hover {
+.form-footer a:hover {
   text-decoration: underline;
 }
 
-.form-header {
-  font-size: 6rem;
-  color: var(--text-color);
-  margin-bottom: 20px;
-  font-weight: bold;
+.form-password-wrapper {
+  width: 332px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.form-password-wrapper img {
   position: absolute;
-  top: 8vh;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.error-message {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  margin: -22.5px;
+  padding: 0px;
+  padding-left: 25px;
+  align-self: flex-start;
+}
+
+.profile-form {
+  width: 350px;
+}
+
+.form-file {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.form-file label {
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  padding: 10px 20px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.form-file label:hover {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+.lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  margin: auto;
+  width: 90vw;
+  display: flex;
+  justify-content: space-between; /* Distribute lines evenly */
+  z-index: 1;
+}
+
+.line {
+  position: relative;
+  width: 2px;
+  height: 100%;
+  /*background: #ffffff;  /* Line color */
+  overflow: hidden;
+}
+
+.line::after {
+  content: "";
+  display: block;
+  position: absolute;
+  height: 15vh;
+  width: 100%;
+  top: -50%;
+  left: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    #ffffff 75%,
+    #ffffff 100%
+  );
+  animation: drop 7s 0s infinite;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.4, 0.26, 0, 0.97);
+}
+
+/* Different colors for each line's pseudo-element */
+.line:nth-child(1)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 0.5s;
+}
+
+.line:nth-child(2)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 1s;
+}
+
+.line:nth-child(3)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 1.5s;
+}
+
+.line:nth-child(4)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 2s;
+}
+
+.line:nth-child(5)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 2.5s;
+}
+
+.line:nth-child(6)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 3s;
+}
+
+.line:nth-child(7)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 3.5s;
+}
+
+.line:nth-child(8)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 4s;
+}
+
+.line:nth-child(9)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 4.5s;
+}
+
+.line:nth-child(10)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 5s;
+}
+
+.line:nth-child(11)::after {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    var(--text-color) 75%,
+    var(--text-color) 100%
+  );
+  animation-delay: 5.5s;
+}
+
+@keyframes drop {
+  0% {
+    top: -50%;
+  }
+  100% {
+    top: 110%;
+  }
+}
+
+@media (max-height: 750px) {
+  .form-container {
+    gap: 20px;
+    padding: 30px 40px;
+    border-radius: 12px;
+  }
+
+  .error-message {
+    margin: -17px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 470px) {
+  .form-container {
+    width: 200px;
+  }
+
+  .profile-form {
+    width: 220px;
+  }
+
+  .form-container h1 {
+    font-size: 2rem;
+    padding-bottom: 10px;
+  }
+
+  .form-container input {
+    font-size: 1rem;
+    width: 90%;
+    padding: 10px;
+  }
+
+  .form-password-wrapper {
+    width: 100%;
+  }
+
+  .form-container button {
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  .form-footer {
+    font-size: 0.75rem;
+  }
+
+  .form-password-wrapper img {
+    width: 20px;
+    height: 20px;
+    right: 20px;
+  }
+
+  .line:nth-child(even)::after {
+    background: none;
+  }
+
+  .line:nth-child(1)::after {
+    animation-delay: 0.5s;
+  }
+
+  .line:nth-child(3)::after {
+    animation-delay: 1s;
+  }
+
+  .line:nth-child(5)::after {
+    animation-delay: 1.5s;
+  }
+
+  .line:nth-child(7)::after {
+    animation-delay: 2s;
+  }
+
+  .line:nth-child(9)::after {
+    animation-delay: 2.5s;
+  }
+
+  .line:nth-child(11)::after {
+    animation-delay: 3s;
+  }
 }
