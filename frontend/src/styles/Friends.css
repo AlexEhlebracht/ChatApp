@@ -156,3 +156,14 @@
   border-width: 0px 0px 0px 2px;
   border-color: gray;
 }
+
+.friends-profile-username {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-color);
+  text-align: center;
+  padding: 10px 0px;
+  align-self: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.158);
+  width: 100%;
+}

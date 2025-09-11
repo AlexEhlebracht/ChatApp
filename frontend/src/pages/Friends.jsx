@@ -15,6 +15,7 @@ const Friends = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [userId, setUserId] = useState(null);
+  const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profilePic, setProfilePic] = useState(null);
@@ -114,6 +115,7 @@ const Friends = () => {
       setFirstName(res.data.first_name);
       setLastName(res.data.last_name);
       setProfilePic(res.data.profile_picture);
+      setUsername(res.data.username);
     } catch (err) {
       console.error("Error fetching user full name:", err);
     }
@@ -222,6 +224,7 @@ const Friends = () => {
           <img src={profilePic} alt="Profile" />
           {profileMenuOpen && (
             <div className="friends-profile-menu">
+              <div className="friends-profile-username">{`@${username}`}</div>
               <button onClick={editProfile}>
                 Edit Profile
               </button>
