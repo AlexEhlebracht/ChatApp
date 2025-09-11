@@ -24,8 +24,6 @@ const CreateProfile = () => {
       const res = await api.get(`/api/profile/`);
       setFirstName(res.data.first_name);
       setLastName(res.data.last_name);
-      setProfilePic(res.data.profile_picture);
-      setFileName(res.data.profile_picture);
     } catch (err) {
       console.error("Error fetching user full name:", err);
     }
@@ -56,7 +54,9 @@ const CreateProfile = () => {
       navigate("/"); // go to home page after profile is created
     } catch (err) {
       if (err.response && err.response.data) {
-        setError("Failed to create profile. Make sure all fields are filled.");
+        console.log(err.response.data);
+        console.log(formData);
+        setError("Failed to edit profile. Make sure all fields are filled.");
       }
     } finally {
       setLoading(false);

@@ -311,6 +311,12 @@
   width: 32px;
 }
 
+.form-file span {
+  overflow-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+}
+
 @keyframes drop {
   0% {
     top: -50%;
