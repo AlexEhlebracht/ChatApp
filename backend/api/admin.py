@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import mark_safe
-from .models import Profile
+from .models import Profile, FriendRequest
 
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'first_name', 'last_name', 'profile_image_preview')
@@ -16,3 +16,4 @@ class ProfileAdmin(admin.ModelAdmin):
     profile_image_preview.short_description = "Profile Picture"
 
 admin.site.register(Profile, ProfileAdmin)
+admin.site.register(FriendRequest)

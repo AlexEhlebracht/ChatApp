@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Profile(models.Model):
@@ -7,6 +8,25 @@ class Profile(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.user.username}'s profile"
+
+
+class FriendRequest(models.Model):
+    from_user = models.ForeignKey(User, related_name="sent_friend_requests", on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name="received_friend_requests", on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=10,
+        choices=[("pending", "Pending"), ("accepted", "Accepted"), ("rejected", "Rejected")],
+        default="pending"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("from_user", "to_user")
+
+    def __str__(self):
+        return f"{self.from_user} → {self.to_user} ({self.status})"

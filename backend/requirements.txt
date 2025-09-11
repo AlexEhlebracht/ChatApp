@@ -8,3 +8,6 @@ pytz
 sqlparse
 psycopg2-binary
 python-dotenv
+Pillow
+channels
+channels_redis

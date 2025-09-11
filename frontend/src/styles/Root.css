@@ -2,7 +2,7 @@
   --primary-color: #95d0e9;
   --secondary-color: #1d2c89;
   --accent-color: #584dda;
-  --background-color: #06161b;
+  --background-color: #0e0e10;
   --text-color: #e8f5fa;
 }
 
@@ -13,4 +13,8 @@ html,
   padding: 0;
   height: 100dvh;
   font-family: "Roboto", sans-serif;
+  background-image: url("../assets/Background.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

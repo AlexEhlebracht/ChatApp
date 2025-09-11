@@ -1,0 +1,70 @@
+.friends-tabs {
+  display: flex;
+  gap: 20px;
+  padding: 10px 20px;
+  background-color: var(--background-color);
+  border-color: rgba(255, 255, 255, 0.158);
+  box-shadow: 0 4px 8px rgb(0, 0, 0);
+}
+
+.friends-tabs button {
+  padding: 10px 20px;
+  background-color: transparent;
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.friends-tabs button:hover {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+.friends-active {
+  background-color: var(--secondary-color) !important;
+  color: var(--text-color) !important;
+}
+
+.friends-header {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-right: 10px;
+  align-self: center;
+}
+
+.friends-header img {
+  height: 32px;
+  width: 32px;
+  vertical-align: middle;
+}
+
+.friends-tabs button img {
+  height: 20px;
+  width: 20px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.friends-header-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--text-color);
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-style: solid;
+  border-width: 0px 0px 2px 0px;
+  border-color: var(--accent-color);
+}
+
+.friends-header-name img {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
