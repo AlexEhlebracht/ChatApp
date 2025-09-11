@@ -5,6 +5,8 @@ import "../styles/Friends.css";
 import FriendsImage from "../assets/friends.png";
 import AddFriendsW from "../assets/add-userW.png";
 import AddFriendsB from "../assets/add-userB.png";
+import { useNavigate } from "react-router-dom";
+import Friend from "../components/Friend";
 
 const Friends = () => {
   const [activeTab, setActiveTab] = useState("Online");
@@ -19,6 +21,14 @@ const Friends = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ws, setWs] = useState(null);
   const [isAddNewHovered, setIsAddNewHovered] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+
+  const navigate = useNavigate();
+
+  function logOut() {
+    localStorage.clear();
+    navigate("/login");
+  }
 
   // Fetch friends
   const fetchFriends = useCallback(async () => {
@@ -198,11 +208,22 @@ const Friends = () => {
             )}
           </button>
         ))}
-        <div className="friends-header-name">
+        <div
+          className="friends-header-name"
+          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+        >
           <div>
             {isAuthenticated ? `${firstName} ${lastName}` : "Not logged in"}
           </div>
           <img src={profilePic} alt="Profile" />
+          {profileMenuOpen && (
+            <div className="friends-profile-menu">
+              <button onClick={() => alert("Go to Profile")}>
+                Edit Profile
+              </button>
+              <button onClick={logOut}>Logout</button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -212,9 +233,7 @@ const Friends = () => {
             {friends
               .filter((f) => f.is_online)
               .map((f) => (
-                <li key={f.id}>
-                  {f.username} <span className="status online">(Online)</span>
-                </li>
+                <Friend key={f.id} profile={f} />
               ))}
             {friends.filter((f) => f.is_online).length === 0 && (
               <p>No friends online</p>
@@ -225,14 +244,7 @@ const Friends = () => {
         {activeTab === "All" && (
           <ul className="friend-list">
             {friends.map((f) => (
-              <li key={f.id}>
-                {f.last_name}{" "}
-                <span
-                  className={`status ${f.is_online ? "online" : "offline"}`}
-                >
-                  {f.is_online ? "(Online)" : "(Offline)"}
-                </span>
-              </li>
+              <Friend key={f.id} profile={f} />
             ))}
             {friends.length === 0 && <p>No friends added</p>}
           </ul>
