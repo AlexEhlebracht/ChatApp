@@ -87,7 +87,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  width: 120px;
+  min-width: 120px;
 }
 
 .friend-item {
@@ -102,6 +102,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
 .friend-item:hover {
@@ -162,7 +163,7 @@
   font-weight: bold;
   color: var(--text-color);
   text-align: center;
-  padding: 10px 0px;
+  padding: 10px 10px;
   align-self: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.158);
   width: 100%;
