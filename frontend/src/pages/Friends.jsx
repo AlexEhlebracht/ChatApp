@@ -30,6 +30,10 @@ const Friends = () => {
     navigate("/login");
   }
 
+  function editProfile() {
+    navigate("/edit-profile");
+  }
+
   // Fetch friends
   const fetchFriends = useCallback(async () => {
     try {
@@ -218,7 +222,7 @@ const Friends = () => {
           <img src={profilePic} alt="Profile" />
           {profileMenuOpen && (
             <div className="friends-profile-menu">
-              <button onClick={() => alert("Go to Profile")}>
+              <button onClick={editProfile}>
                 Edit Profile
               </button>
               <button onClick={logOut}>Logout</button>
