@@ -9,7 +9,9 @@ from rest_framework.views import APIView
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from django.db.models import Value
+from django.db.models.functions import Concat
+from django.db.models import Q
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -28,6 +30,8 @@ class TestAuthView(generics.GenericAPIView):
         })
     
 
+
+
 class UserSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -36,9 +40,32 @@ class UserSearchView(APIView):
         if not query:
             return Response([], status=200)
         
-        users = User.objects.filter(username__icontains=query).exclude(id=request.user.id)
-        return Response(UserSerializer(users, many=True).data)
-    
+        # Annotate full_name for searching
+        profiles = Profile.objects.annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        ).filter(
+            full_name__icontains=query
+        ).exclude(user=request.user)  # exclude self
+
+        # Exclude users with pending or accepted friend requests
+        existing_requests = FriendRequest.objects.filter(
+            Q(from_user=request.user) | Q(to_user=request.user),
+            status__in=["pending", "accepted"]
+        )
+
+        # Collect the IDs of users who already have a request/are friends
+        excluded_user_ids = set()
+        for req in existing_requests:
+            if req.from_user == request.user:
+                excluded_user_ids.add(req.to_user.id)
+            else:
+                excluded_user_ids.add(req.from_user.id)
+
+        profiles = profiles.exclude(user__id__in=excluded_user_ids)
+
+        return Response(ProfileSerializer(profiles, many=True).data)
+
+
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     """
@@ -127,19 +154,18 @@ class AcceptFriendRequestView(generics.UpdateAPIView):
 
 
 # Reject Friend Request
-class RejectFriendRequestView(generics.UpdateAPIView):
+class RejectFriendRequestView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = FriendRequestSerializer
     queryset = FriendRequest.objects.all()
 
-    def update(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         friend_request = self.get_object()
         if friend_request.to_user != request.user:
             return Response({"error": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
 
-        friend_request.status = "rejected"
-        friend_request.save()
-        return Response(FriendRequestSerializer(friend_request).data)
+        friend_request.delete()
+        return Response({"message": "Friend request rejected and deleted."}, status=status.HTTP_204_NO_CONTENT)
 
 
 # List Incoming Requests

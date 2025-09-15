@@ -35,7 +35,7 @@
   margin-right: 10px;
   align-self: center;
   position: relative;
-  cursor: pointer;
+  cursor: default;
 }
 
 .friends-header img {
@@ -126,7 +126,8 @@
   width: 40px;
   border-radius: 50%;
   object-fit: cover;
-  padding-left: 10px;
+  margin-left: 10px;
+  vertical-align: middle;
 }
 
 .friend-username {
@@ -166,5 +167,96 @@
   padding: 10px 10px;
   align-self: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.158);
+  width: 100%;
+}
+
+.friend-status-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.friend-status-actions button {
+  padding: 10px 20px;
+  background-color: transparent;
+  color: var(--text-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.friend-status-actions button:hover {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+.friend-item-pending {
+  padding: 10px 15px;
+  color: var(--text-color);
+  transition: background-color 0.3s ease;
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.158);
+  box-shadow: 0 4px 8px rgb(0, 0, 0);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin: 10px;
+  padding: 10px;
+  width: 500px;
+  align-items: center;
+  justify-content: center;
+}
+.search-bar input {
+  width: 100%;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 100px;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0);
+  padding: 15px;
+  border-color: rgba(255, 255, 255, 0.247);
+  color: var(--text-color);
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.726);
+}
+
+.search-bar button {
+  width: 20%;
+  padding: 15px;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: 100px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.search-bar button:hover {
+  background-color: var(--primary-color);
+  color: var(--background-color);
+}
+
+.friend-list p {
+  color: var(--text-color);
+}
+
+.friends-whole {
+  display: flex;
+}
+
+.friends-container {
   width: 100%;
 }

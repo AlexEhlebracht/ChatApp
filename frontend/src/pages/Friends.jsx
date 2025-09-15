@@ -8,6 +8,8 @@ import AddFriendsB from "../assets/add-userB.png";
 import { useNavigate } from "react-router-dom";
 import Friend from "../components/Friend";
 import SearchProfiles from "../components/SearchProfiles";
+import PendingFriends from "../components/PendingFriend";
+import FriendMessages from "../components/FriendMessages";
 
 const Friends = () => {
   const [activeTab, setActiveTab] = useState("Online");
@@ -72,7 +74,7 @@ const Friends = () => {
   const rejectRequest = useCallback(
     async (id) => {
       try {
-        await api.put(`/api/friends/reject/${id}/`);
+        await api.delete(`/api/friends/reject/${id}/`);
         await fetchPendingRequests();
       } catch (err) {
         console.error("Error rejecting request:", err);
@@ -135,6 +137,14 @@ const Friends = () => {
         // Just refresh the friends list
         fetchFriends();
       }
+      if (data.event === "friend_request") {
+        // Just refresh the pending requests list
+        fetchPendingRequests();
+      }
+      if (data.event === "friend_request_accepted") {
+        fetchFriends();
+        fetchPendingRequests();
+      }
     };
 
     socket.onerror = (err) => console.error("WebSocket error:", err);
@@ -162,91 +172,90 @@ const Friends = () => {
   }, [activeTab, fetchFriends, fetchPendingRequests]);
 
   return (
-    <div className="friends-container">
-      <nav className="friends-tabs">
-        <div className="friends-header">
-          <img src={FriendsImage} alt="Friends" />
-          Friends
-        </div>
-        {["Online", "All", "Pending", "Add Friend"].map((tab) => (
-          <button
-            key={tab}
-            className={activeTab === tab ? "friends-active" : ""}
-            onClick={() => setActiveTab(tab)}
-            onMouseEnter={
-              tab === "Add Friend" ? () => setIsAddNewHovered(true) : undefined
-            }
-            onMouseLeave={
-              tab === "Add Friend" ? () => setIsAddNewHovered(false) : undefined
-            }
-          >
-            {tab}
-            {tab === "Add Friend" && (
-              <img src={isAddNewHovered ? AddFriendsB : AddFriendsW} />
-            )}
-          </button>
-        ))}
-        <div
-          className="friends-header-name"
-          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-        >
-          <div>
-            {isAuthenticated ? `${firstName} ${lastName}` : "Not logged in"}
+    <div className="friends-whole">
+      <FriendMessages friends={friends} />
+      <div className="friends-container">
+        <nav className="friends-tabs">
+          <div className="friends-header">
+            <img src={FriendsImage} alt="Friends" />
+            Friends
           </div>
-          <img src={profilePic} alt="Profile" />
-          {profileMenuOpen && (
-            <div className="friends-profile-menu">
-              <div className="friends-profile-username">{`@${username}`}</div>
-              <button onClick={editProfile}>
-                Edit Profile
-              </button>
-              <button onClick={logOut}>Logout</button>
+          {["Online", "All", "Pending", "Add Friend"].map((tab) => (
+            <button
+              key={tab}
+              className={activeTab === tab ? "friends-active" : ""}
+              onClick={() => setActiveTab(tab)}
+              onMouseEnter={
+                tab === "Add Friend"
+                  ? () => setIsAddNewHovered(true)
+                  : undefined
+              }
+              onMouseLeave={
+                tab === "Add Friend"
+                  ? () => setIsAddNewHovered(false)
+                  : undefined
+              }
+            >
+              {tab}
+              {tab === "Add Friend" && (
+                <img src={isAddNewHovered ? AddFriendsB : AddFriendsW} />
+              )}
+            </button>
+          ))}
+          <div
+            className="friends-header-name"
+            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+          >
+            <div>
+              {isAuthenticated ? `${firstName} ${lastName}` : "Not logged in"}
             </div>
-          )}
-        </div>
-      </nav>
+            <img src={profilePic} alt="Profile" />
+            {profileMenuOpen && (
+              <div className="friends-profile-menu">
+                <div className="friends-profile-username">{`@${username}`}</div>
+                <button onClick={editProfile}>Edit Profile</button>
+                <button onClick={logOut}>Logout</button>
+              </div>
+            )}
+          </div>
+        </nav>
 
-      <div className="content">
-        {activeTab === "Online" && (
-          <ul className="friend-list">
-            {friends
-              .filter((f) => f.is_online)
-              .map((f) => (
+        <div className="content">
+          {activeTab === "Online" && (
+            <ul className="friend-list">
+              {friends
+                .filter((f) => f.is_online)
+                .map((f) => (
+                  <Friend key={f.id} profile={f} />
+                ))}
+            </ul>
+          )}
+
+          {activeTab === "All" && (
+            <ul className="friend-list">
+              {friends.map((f) => (
                 <Friend key={f.id} profile={f} />
               ))}
-            {friends.filter((f) => f.is_online).length === 0 && (
-              <p>No friends online</p>
-            )}
-          </ul>
-        )}
+            </ul>
+          )}
 
-        {activeTab === "All" && (
-          <ul className="friend-list">
-            {friends.map((f) => (
-              <Friend key={f.id} profile={f} />
-            ))}
-            {friends.length === 0 && <p>No friends added</p>}
-          </ul>
-        )}
+          {activeTab === "Pending" && (
+            <ul className="friend-list">
+              {pendingRequests.map((req) => (
+                <PendingFriends
+                  key={req.id}
+                  profile={req.from_user.profile}
+                  id={req.id}
+                  acceptRequest={acceptRequest}
+                  rejectRequest={rejectRequest}
+                />
+              ))}
+              {pendingRequests.length === 0 && <p>No pending requests</p>}
+            </ul>
+          )}
 
-        {activeTab === "Pending" && (
-          <ul className="friend-list">
-            {pendingRequests.map((req) => (
-              <li key={req.id}>
-                {req.from_user.username}
-                <div className="actions">
-                  <button onClick={() => acceptRequest(req.id)}>Accept</button>
-                  <button onClick={() => rejectRequest(req.id)}>Reject</button>
-                </div>
-              </li>
-            ))}
-            {pendingRequests.length === 0 && <p>No pending requests</p>}
-          </ul>
-        )}
-
-        {activeTab === "Add Friend" && (
-          <SearchProfiles />
-        )}
+          {activeTab === "Add Friend" && <SearchProfiles />}
+        </div>
       </div>
     </div>
   );

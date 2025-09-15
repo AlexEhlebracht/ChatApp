@@ -47,13 +47,33 @@ class ProfileSerializer(serializers.ModelSerializer):
         user = self.context['user']
         profile = Profile.objects.create(user=user, **validated_data)
         return profile
+    
+
+
+class NestedProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['username', 'first_name', 'last_name', 'profile_picture', 'is_online', 'last_seen']
+
+        
+
+class NestedUserSerializer(serializers.ModelSerializer):
+    profile = NestedProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'profile']
 
     
 
 class FriendRequestSerializer(serializers.ModelSerializer):
-    from_user = UserSerializer(read_only=True)
-    to_user = UserSerializer(read_only=True)
+    from_user = NestedUserSerializer(read_only=True)
+    to_user = NestedUserSerializer(read_only=True)
 
     class Meta:
         model = FriendRequest
         fields = ["id", "from_user", "to_user", "status", "created_at"]
+
+        

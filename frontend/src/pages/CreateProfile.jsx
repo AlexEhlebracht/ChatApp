@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import "../styles/Form.css";
 import TypewriterEffect from "../components/TypewriterEffect";
+import DefaultProfilePic from "../assets/user.png";
 
 const CreateProfile = () => {
   const navigate = useNavigate();
@@ -27,7 +28,15 @@ const CreateProfile = () => {
     const formData = new FormData();
     formData.append("first_name", firstName);
     formData.append("last_name", lastName);
-    if (profilePic) formData.append("profile_picture", profilePic);
+    if (profilePic) {
+      formData.append("profile_picture", profilePic);
+    } else {
+      // Fetch the default image as blob
+      const response = await fetch(DefaultProfilePic);
+      const blob = await response.blob();
+      const file = new File([blob], "default-profile.png", { type: blob.type });
+      formData.append("profile_picture", file);
+    }
 
     try {
       await api.put("/api/profile/", formData, {
