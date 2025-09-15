@@ -294,6 +294,29 @@
   animation-delay: 5.5s;
 }
 
+.form-close {
+  position: absolute;
+  transform: translate(50%, -50%);
+  top: 30px;
+  right: 30px;
+  height: 30px;
+  width: 30px;
+  color: var(--text-color);
+  cursor: pointer;
+  z-index: 3;
+}
+
+.form-close:hover {
+  height: 32px;
+  width: 32px;
+}
+
+.form-file span {
+  overflow-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+}
+
 @keyframes drop {
   0% {
     top: -50%;

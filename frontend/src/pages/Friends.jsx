@@ -7,14 +7,14 @@ import AddFriendsW from "../assets/add-userW.png";
 import AddFriendsB from "../assets/add-userB.png";
 import { useNavigate } from "react-router-dom";
 import Friend from "../components/Friend";
+import SearchProfiles from "../components/SearchProfiles";
 
 const Friends = () => {
   const [activeTab, setActiveTab] = useState("Online");
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [userId, setUserId] = useState(null);
+  const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profilePic, setProfilePic] = useState(null);
@@ -28,6 +28,10 @@ const Friends = () => {
   function logOut() {
     localStorage.clear();
     navigate("/login");
+  }
+
+  function editProfile() {
+    navigate("/edit-profile");
   }
 
   // Fetch friends
@@ -49,33 +53,6 @@ const Friends = () => {
       console.log("Fetched pending requests:", res.data);
     } catch (err) {
       console.error("Error fetching pending requests:", err);
-    }
-  }, []);
-
-  // Search users
-  const handleSearch = useCallback(
-    async (e) => {
-      e.preventDefault();
-      if (!searchQuery) return;
-      try {
-        const res = await api.get(`/api/users/search/?q=${searchQuery}`);
-        setSearchResults(res.data);
-        console.log("Search results:", res.data);
-      } catch (err) {
-        console.error("Error searching users:", err);
-      }
-    },
-    [searchQuery]
-  );
-
-  // Friend request actions
-  const sendFriendRequest = useCallback(async (username) => {
-    try {
-      await api.post("/api/friends/request/", { to_username: username });
-      alert(`Friend request sent to ${username}`);
-    } catch (err) {
-      console.error("Error sending friend request:", err);
-      alert("Failed to send friend request");
     }
   }, []);
 
@@ -110,6 +87,7 @@ const Friends = () => {
       setFirstName(res.data.first_name);
       setLastName(res.data.last_name);
       setProfilePic(res.data.profile_picture);
+      setUsername(res.data.username);
     } catch (err) {
       console.error("Error fetching user full name:", err);
     }
@@ -218,7 +196,8 @@ const Friends = () => {
           <img src={profilePic} alt="Profile" />
           {profileMenuOpen && (
             <div className="friends-profile-menu">
-              <button onClick={() => alert("Go to Profile")}>
+              <div className="friends-profile-username">{`@${username}`}</div>
+              <button onClick={editProfile}>
                 Edit Profile
               </button>
               <button onClick={logOut}>Logout</button>
@@ -265,31 +244,8 @@ const Friends = () => {
           </ul>
         )}
 
-        {activeTab === "Add New" && (
-          <div className="search-form">
-            <form onSubmit={handleSearch}>
-              <input
-                type="text"
-                placeholder="Search by username"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit">Search</button>
-            </form>
-            <ul className="friend-list">
-              {searchResults.map((user) => (
-                <li key={user.id}>
-                  {user.username}
-                  <button onClick={() => sendFriendRequest(user.username)}>
-                    Add Friend
-                  </button>
-                </li>
-              ))}
-              {searchResults.length === 0 && searchQuery && (
-                <p>No users found</p>
-              )}
-            </ul>
-          </div>
+        {activeTab === "Add Friend" && (
+          <SearchProfiles />
         )}
       </div>
     </div>
