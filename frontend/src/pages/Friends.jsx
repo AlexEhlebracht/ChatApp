@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, act } from "react";
 import api from "../api";
 import { jwtDecode } from "jwt-decode";
 import "../styles/Friends.css";
@@ -10,6 +10,7 @@ import Friend from "../components/Friend";
 import SearchProfiles from "../components/SearchProfiles";
 import PendingFriends from "../components/PendingFriend";
 import FriendMessages from "../components/FriendMessages";
+import Messages from "../components/Messages";
 
 const Friends = () => {
   const [activeTab, setActiveTab] = useState("Online");
@@ -24,6 +25,8 @@ const Friends = () => {
   const [ws, setWs] = useState(null);
   const [isAddNewHovered, setIsAddNewHovered] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [friend, setFriend] = useState(null); // New state for selected friend in Messages
+  const wRef = React.useRef(null);
 
   const navigate = useNavigate();
 
@@ -126,6 +129,8 @@ const Friends = () => {
       `ws://127.0.0.1:8000/ws/friends/?user_id=${userId}`
     );
 
+    wRef.current = socket;
+
     socket.onopen = () => {
       console.log("WebSocket connected for user:", userId);
     };
@@ -173,7 +178,11 @@ const Friends = () => {
 
   return (
     <div className="friends-whole">
-      <FriendMessages friends={friends} />
+      <FriendMessages
+        friends={friends}
+        setActiveTab={setActiveTab}
+        setFriend={setFriend}
+      />
       <div className="friends-container">
         <nav className="friends-tabs">
           <div className="friends-header">
@@ -255,6 +264,7 @@ const Friends = () => {
           )}
 
           {activeTab === "Add Friend" && <SearchProfiles />}
+          {activeTab === "Messages" && <Messages friend={friend} ws={wRef} />}
         </div>
       </div>
     </div>

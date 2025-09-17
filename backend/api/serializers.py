@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import Profile, FriendRequest
+from .models import Profile, FriendRequest, Message
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -37,11 +37,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     is_online = serializers.BooleanField(read_only=True)  # <-- add this
 
     class Meta:
         model = Profile
-        fields = ['id', 'username', 'first_name', 'last_name', 'profile_picture', 'is_online', 'last_seen']
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_picture', 'is_online', 'last_seen', 'user_id']
 
     def create(self, validated_data):
         user = self.context['user']
@@ -77,3 +78,11 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         fields = ["id", "from_user", "to_user", "status", "created_at"]
 
         
+
+class MessageSerializer(serializers.ModelSerializer):
+    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    sender = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ["id", "sender", "receiver", "content", "timestamp", "is_read"]

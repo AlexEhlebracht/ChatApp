@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .serializers import UserSerializer, ProfileSerializer, FriendRequestSerializer
-from .models import Profile, FriendRequest
+from .serializers import UserSerializer, ProfileSerializer, FriendRequestSerializer, MessageSerializer
+from .models import Profile, FriendRequest, Message
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from channels.layers import get_channel_layer
@@ -200,3 +200,23 @@ class FriendsListView(generics.ListAPIView):
             to_user=self.request.user, status="accepted"
         ).values_list("from_user", flat=True)
         return Profile.objects.filter(user__id__in=list(sent) + list(received))
+    
+
+class MessageListView(generics.ListAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        friend_id = self.kwargs["friend_id"]
+        user = self.request.user
+        return Message.objects.filter(
+            (Q(sender=user) & Q(receiver_id=friend_id)) |
+            (Q(sender_id=friend_id) & Q(receiver=user))
+        ).order_by("timestamp")
+
+class MessageCreateView(generics.CreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)

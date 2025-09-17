@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import (
+    MessageCreateView,
+    MessageListView,
     ProfileView,
     SendFriendRequestView,
     AcceptFriendRequestView,
@@ -19,4 +21,6 @@ urlpatterns = [
     path("friends/incoming/", IncomingFriendRequestsView.as_view(), name="incoming-friend-requests"),
     path("friends/outgoing/", OutgoingFriendRequestsView.as_view(), name="outgoing-friend-requests"),
     path("friends/", FriendsListView.as_view(), name="friends-list"),
+    path("messages/<int:friend_id>/", MessageListView.as_view(), name="message-list"),
+    path("messages/", MessageCreateView.as_view(), name="message-create"),
 ]

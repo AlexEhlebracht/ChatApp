@@ -1,7 +1,8 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
-from .models import Profile, FriendRequest
+from .models import Profile, FriendRequest, Message
+from .serializers import MessageSerializer
 import django.db.models as models
 import json
 from django.utils import timezone
@@ -110,3 +111,45 @@ class FriendConsumer(AsyncWebsocketConsumer):
                     "is_online": is_online
                 }
             )
+
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        
+        # If it's a chat message
+        if data.get("event") == "send_message":
+            receiver_id = data.get("receiver_id")
+            content = data.get("content")
+            if not receiver_id or not content:
+                return
+
+            message = await self.save_message(receiver_id, content)
+            serialized = MessageSerializer(message).data
+
+            # Send to receiver
+            await self.channel_layer.group_send(
+                f"user_{receiver_id}",
+                {
+                    "type": "chat_message",
+                    "message": serialized
+                }
+            )
+
+            # Echo back to sender
+            await self.send(text_data=json.dumps({
+                "event": "message_sent",
+                "message": serialized
+            }))
+
+    # Handler for incoming messages
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "new_message",
+            "message": event["message"]
+        }))
+
+    @database_sync_to_async
+    def save_message(self, receiver_id, content):
+        from django.contrib.auth.models import User
+        receiver = User.objects.get(id=receiver_id)
+        return Message.objects.create(sender=self.user, receiver=receiver, content=content)
