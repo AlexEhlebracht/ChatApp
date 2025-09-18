@@ -219,4 +219,27 @@ class MessageCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
+        message = serializer.save(sender=self.request.user)
+
+        # Notify both the sender and receiver via WebSocket
+        channel_layer = get_channel_layer()
+
+        # Send to the receiver (assuming the receiver's ID is in the message)
+        receiver_id = message.receiver.id
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{receiver_id}",
+            {
+                "type": "chat_message",
+                "message": MessageSerializer(message).data  # Serialize the message
+            }
+        )
+
+        # Send to the sender (optional, if you want an acknowledgment)
+        async_to_sync(channel_layer.group_send)(
+            f"user_{message.sender.id}",
+            {
+                "type": "chat_message",
+                "message": MessageSerializer(message).data
+            }
+        )

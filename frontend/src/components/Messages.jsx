@@ -32,9 +32,12 @@ const Messages = ({ friend, currentUserId, ws }) => {
 
     const handleMessage = (e) => {
       const data = JSON.parse(e.data);
-      if (data.event === "new_message") {
+      if (data.event === "new_message" || data.event === "chat_message" || data.event === "message_sent") {
         const msg = data.message;
-        if (msg.sender === friend.id || msg.receiver === friend.id) {
+        console.log("WebSocket message received:", msg);
+        console.log("Current friend ID:", friend);
+        if (msg.sender === friend.user_id || msg.receiver === friend.user_id) {
+          console.log("Received message for current chat:", msg);
           setMessages((prev) => [...prev, msg]);
         }
       }
