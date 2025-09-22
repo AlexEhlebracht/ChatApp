@@ -8,6 +8,7 @@ import json
 from django.utils import timezone
 from urllib.parse import parse_qs
 
+
 class FriendConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Get user_id from query string
@@ -24,13 +25,15 @@ class FriendConsumer(AsyncWebsocketConsumer):
 
         print(f"WebSocket connect attempt by user: {self.user}, user_id: {user_id}")
 
-        # Allow all connections
+        # Always join a group (even anonymous gets a placeholder group)
         self.group_name = f"user_{self.user.id if self.user else 'anonymous'}"
         print(f"Joining group: {self.group_name}")
         await self.channel_layer.group_add(self.group_name, self.channel_name)
+
         if self.user:
             await self.update_online_status(True)
             await self.notify_friends_status(True)
+
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -41,10 +44,45 @@ class FriendConsumer(AsyncWebsocketConsumer):
             await self.notify_friends_status(False)
 
     async def receive(self, text_data):
-        pass
+        data = json.loads(text_data)
+        print("WS received:", data)
+
+        if data.get("event") == "send_message":
+            receiver_id = data.get("receiver_id")
+            content = data.get("content")
+            if not receiver_id or not content:
+                return
+
+            # Save to DB
+            message = await self.save_message(receiver_id, content)
+            serialized = MessageSerializer(message).data
+
+            # Broadcast to receiver group
+            await self.channel_layer.group_send(
+                f"user_{receiver_id}",
+                {
+                    "type": "chat_message",
+                    "message": serialized
+                }
+            )
+
+            # Broadcast to sender group too
+            await self.channel_layer.group_send(
+                f"user_{self.user.id}",
+                {
+                    "type": "chat_message",
+                    "message": serialized
+                }
+            )
+
+    # Generic chat message handler (same for sender + receiver)
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "new_message",
+            "message": event["message"]
+        }))
 
     async def friend_request(self, event):
-        print(f"Sending friend_request to {self.user or 'anonymous'}: {event}")
         await self.send(text_data=json.dumps({
             "event": "friend_request",
             "from_user": event["from_user"],
@@ -52,7 +90,6 @@ class FriendConsumer(AsyncWebsocketConsumer):
         }))
 
     async def friend_request_accepted(self, event):
-        print(f"Sending friend_request_accepted to {self.user or 'anonymous'}: {event}")
         await self.send(text_data=json.dumps({
             "event": "friend_request_accepted",
             "from_user": event["from_user"],
@@ -61,7 +98,6 @@ class FriendConsumer(AsyncWebsocketConsumer):
         }))
 
     async def online_status(self, event):
-        print(f"Sending online_status to {self.user or 'anonymous'}: {event}")
         await self.send(text_data=json.dumps({
             "event": "online_status",
             "user_id": event["user_id"],
@@ -101,7 +137,6 @@ class FriendConsumer(AsyncWebsocketConsumer):
             return
         friends = await self.get_friends()
         for friend in friends:
-            print(f"Notifying friend {friend.username} of {self.user.username}'s status: {is_online}")
             await self.channel_layer.group_send(
                 f"user_{friend.id}",
                 {
@@ -112,44 +147,7 @@ class FriendConsumer(AsyncWebsocketConsumer):
                 }
             )
 
-
-    async def receive(self, text_data):
-        data = json.loads(text_data)
-        
-        # If it's a chat message
-        if data.get("event") == "send_message":
-            receiver_id = data.get("receiver_id")
-            content = data.get("content")
-            if not receiver_id or not content:
-                return
-
-            message = await self.save_message(receiver_id, content)
-            serialized = MessageSerializer(message).data
-
-            # Send to receiver
-            await self.channel_layer.group_send(
-                f"user_{receiver_id}",
-                {
-                    "type": "chat_message",
-                    "message": serialized
-                }
-            )
-
-            # Echo back to sender
-            await self.send(text_data=json.dumps({
-                "event": "message_sent",
-                "message": serialized
-            }))
-
-    # Handler for incoming messages
-    async def chat_message(self, event):
-        await self.send(text_data=json.dumps({
-            "event": "new_message",
-            "message": event["message"]
-        }))
-
     @database_sync_to_async
     def save_message(self, receiver_id, content):
-        from django.contrib.auth.models import User
         receiver = User.objects.get(id=receiver_id)
         return Message.objects.create(sender=self.user, receiver=receiver, content=content)
