@@ -5,6 +5,7 @@ import AddFriend from "./AddFriend";
 const SearchProfiles = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [didSearch, setDidSearch] = useState(false);
 
   // Actual search function
   const performSearch = useCallback(async () => {
@@ -23,6 +24,7 @@ const SearchProfiles = () => {
     async (e) => {
       e.preventDefault();
       await performSearch();
+      setDidSearch(true);
     },
     [performSearch]
   );
@@ -63,7 +65,9 @@ const SearchProfiles = () => {
             />
           </li>
         ))}
-        {searchResults.length === 0 && searchQuery && <p>No users found</p>}
+        {searchResults.length === 0 && searchQuery && didSearch && (
+          <p>No users found</p>
+        )}
       </ul>
     </div>
   );
