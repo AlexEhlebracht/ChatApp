@@ -264,7 +264,9 @@ const Friends = () => {
           )}
 
           {activeTab === "Add Friend" && <SearchProfiles />}
-          {activeTab === "Messages" && <Messages friend={friend} ws={wRef} />}
+          {activeTab === "Messages" && (
+            <Messages friend={friend} currentUserId={userId} ws={wRef} />
+          )}
         </div>
       </div>
     </div>

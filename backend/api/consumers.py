@@ -74,12 +74,36 @@ class FriendConsumer(AsyncWebsocketConsumer):
                     "message": serialized
                 }
             )
+        
+        elif data.get("event") == "typing":
+            receiver_id = data.get("receiver_id")
+            is_typing = data.get("is_typing", False)
+
+            if receiver_id:
+                # Send typing event to receiver
+                await self.channel_layer.group_send(
+                    f"user_{receiver_id}",
+                    {
+                        "type": "typing_indicator",
+                        "user_id": self.user.id,
+                        "username": self.user.username,
+                        "is_typing": is_typing
+                    }
+                )
 
     # Generic chat message handler (same for sender + receiver)
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             "event": "new_message",
             "message": event["message"]
+        }))
+
+    async def typing_indicator(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "typing_indicator",
+            "user_id": event["user_id"],
+            "username": event["username"],
+            "is_typing": event["is_typing"],
         }))
 
     async def friend_request(self, event):
