@@ -1,6 +1,6 @@
 import React from "react";
 
-const Friend = ({ profile }) => {
+const Friend = ({ profile, setActiveTab, setFriend }) => {
   function timeAgo(dateString) {
     const now = new Date();
     const past = new Date(dateString);
@@ -17,7 +17,13 @@ const Friend = ({ profile }) => {
   }
 
   return (
-    <div className="friend-item">
+    <div
+      className="friend-item"
+      onClick={() => {
+        setActiveTab("Messages");
+        setFriend(profile);
+      }}
+    >
       <div
         className={`friend-pic ${
           profile.is_online ? "friend-online" : "friend-offline"

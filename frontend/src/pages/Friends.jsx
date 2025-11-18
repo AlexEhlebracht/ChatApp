@@ -235,7 +235,12 @@ const Friends = () => {
               {friends
                 .filter((f) => f.is_online)
                 .map((f) => (
-                  <Friend key={f.id} profile={f} />
+                  <Friend
+                    key={f.id}
+                    profile={f}
+                    setActiveTab={setActiveTab}
+                    setFriend={setFriend}
+                  />
                 ))}
             </ul>
           )}
@@ -243,7 +248,12 @@ const Friends = () => {
           {activeTab === "All" && (
             <ul className="friend-list">
               {friends.map((f) => (
-                <Friend key={f.id} profile={f} />
+                <Friend
+                  key={f.id}
+                  profile={f}
+                  setActiveTab={setActiveTab}
+                  setFriend={setFriend}
+                />
               ))}
             </ul>
           )}

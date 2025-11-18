@@ -12,6 +12,17 @@ const Messages = ({ friend, currentUserId, ws }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [friendTyping, setFriendTyping] = useState(false);
 
+  const GROUP_THRESHOLD = 2 * 60 * 1000; // 2 minutes
+
+  const shouldShowTimestamp = (msg, nextMsg) => {
+    if (!nextMsg) return true; // last message always shows
+    // Show timestamp if sender changes or gap > threshold
+    return (
+      msg.sender !== nextMsg.sender ||
+      new Date(nextMsg.timestamp) - new Date(msg.timestamp) > GROUP_THRESHOLD
+    );
+  };
+
   useEffect(() => {
     if (!ws?.current) return;
 
@@ -154,6 +165,25 @@ const Messages = ({ friend, currentUserId, ws }) => {
     }
   };
 
+  const formatTimestamp = (ts) => {
+    const date = new Date(ts);
+    const now = new Date();
+
+    const isToday = date.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    return (
+      date.toLocaleDateString([], { month: "short", day: "numeric" }) +
+      " " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
+  };
+
   return (
     <div className="message-container">
       <div className="message-header">
@@ -171,19 +201,26 @@ const Messages = ({ friend, currentUserId, ws }) => {
       </div>
       <div className="message-content-wrapper">
         <div className="message-content" ref={messageContentRef}>
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`message-bubble ${
-                msg.sender == currentUserId ? "sent" : "received"
-              }`}
-            >
-              <p className="message-text-content">{msg.content}</p>
-              <span className="message-timestamp">
-                {new Date(msg.timestamp).toLocaleTimeString()}
-              </span>
-            </div>
-          ))}
+          {messages.map((msg, i) => {
+            const nextMsg = messages[i + 1];
+            const showTimestamp = shouldShowTimestamp(msg, nextMsg);
+
+            return (
+              <div
+                key={msg.id}
+                className={`message-bubble ${
+                  msg.sender == currentUserId ? "sent" : "received"
+                }`}
+              >
+                <p className="message-text-content">{msg.content}</p>
+                {showTimestamp && (
+                  <span className="message-timestamp">
+                    {formatTimestamp(msg.timestamp)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
           <div ref={messagesEndRef} />
           {friendTyping && (
             <div className="typing-indicator message-text-content">
