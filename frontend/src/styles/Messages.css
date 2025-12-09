@@ -50,6 +50,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-radius: 50%;
 }
 
 .messages-item {
@@ -91,6 +92,13 @@
   border-radius: 0px 0px 20px 20px;
   color: var(--text-color);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.534);
+}
+
+.message-header-pic {
+  height: 100px;
+  width: 100px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .message-content {
@@ -233,6 +241,8 @@
   margin-bottom: 5px;
   width: fit-content;
   text-align: justify;
+  max-width: 90%;
+  overflow-wrap: break-word;
 }
 
 .message-bubble.sent .message-text-content {

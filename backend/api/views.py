@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .serializers import UserSerializer, ProfileSerializer, FriendRequestSerializer, MessageSerializer
-from .models import Profile, FriendRequest, Message
+from .models import HasNewMessage, Profile, FriendRequest, Message
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from channels.layers import get_channel_layer

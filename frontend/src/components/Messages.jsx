@@ -123,6 +123,21 @@ const Messages = ({ friend, currentUserId, ws }) => {
   }, [friend.id, ws]);
 
   useEffect(() => {
+    const box = messageContentRef.current;
+
+    const handleScroll = () => {
+      console.log("Box scrolled:", box.scrollTop);
+      if (isAtBottom()) {
+        setNewMessage(false);
+      }
+    };
+
+    box.addEventListener("scroll", handleScroll);
+
+    return () => box.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
     if (shouldScroll) {
       scrollToBottom();
       setShouldScroll(false);

@@ -269,7 +269,7 @@ const Friends = () => {
                   rejectRequest={rejectRequest}
                 />
               ))}
-              {pendingRequests.length === 0 && <p>No pending requests</p>}
+              {pendingRequests.length === 0 && <p></p>}
             </ul>
           )}
 
