@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from .models import Profile, FriendRequest, Message, HasNewMessage
+from .models import Profile, FriendRequest, Message
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -75,7 +75,7 @@ class FriendRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FriendRequest
-        fields = ["id", "from_user", "to_user", "status", "created_at"]
+        fields = ["id", "from_user", "to_user", "status", "from_new_message", "to_new_message", "created_at"]
 
         
 

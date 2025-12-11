@@ -11,9 +11,30 @@ import SearchProfiles from "../components/SearchProfiles";
 import PendingFriends from "../components/PendingFriend";
 import FriendMessages from "../components/FriendMessages";
 import Messages from "../components/Messages";
+import MessageImage from "../assets/message.png";
+
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+
+    const listener = () => setMatches(media.matches);
+    media.addEventListener("change", listener);
+
+    return () => media.removeEventListener("change", listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 const Friends = () => {
-  const [activeTab, setActiveTab] = useState("Online");
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem("activeTab") || "Online";
+  });
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [userId, setUserId] = useState(null);
@@ -25,8 +46,27 @@ const Friends = () => {
   const [ws, setWs] = useState(null);
   const [isAddNewHovered, setIsAddNewHovered] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [friend, setFriend] = useState(null); // New state for selected friend in Messages
+  const [friend, setFriend] = useState(() => {
+    // This runs ONCE on mount, before first render
+    const savedFriend = localStorage.getItem("friend");
+    if (savedFriend) {
+      try {
+        return JSON.parse(savedFriend);
+      } catch (error) {
+        console.error("Error parsing saved friend:", error);
+        localStorage.removeItem("friend");
+        return null;
+      }
+    }
+    return null;
+  });
+  console.log("Current friend:", friend);
   const wRef = React.useRef(null);
+  const [hasNewMessage, setHasNewMessage] = useState([]);
+  const friendRef = React.useRef(null);
+  const activeTabRef = React.useRef(activeTab);
+  const isTablet = useMediaQuery("(max-width: 950px)");
+  const [isMessagesHidden, setIsMessagesHidden] = useState(isTablet);
 
   const navigate = useNavigate();
 
@@ -39,14 +79,36 @@ const Friends = () => {
     navigate("/edit-profile");
   }
 
+  useEffect(() => {
+    friendRef.current = friend;
+    if (friend) {
+      localStorage.setItem("friend", JSON.stringify(friend));
+    }
+  }, [friend]);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+    localStorage.setItem("activeTab", activeTab);
+  }, [activeTab]);
+
   // Fetch friends
   const fetchFriends = useCallback(async () => {
     try {
       const res = await api.get("/api/friends/");
       setFriends(res.data);
-      console.log("Fetched friends:", res.data);
+      //console.log("Fetched friends:", res.data);
     } catch (err) {
       console.error("Error fetching friends:", err);
+    }
+  }, []);
+
+  const fetchHasNewMessage = useCallback(async () => {
+    try {
+      const res = await api.get("/api/has_new_message/");
+      setHasNewMessage(res.data);
+      console.log("Fetched has new message:", res.data);
+    } catch (err) {
+      console.error("Error fetching has new message:", err);
     }
   }, []);
 
@@ -67,11 +129,12 @@ const Friends = () => {
         await api.put(`/api/friends/accept/${id}/`);
         await fetchPendingRequests();
         await fetchFriends();
+        await fetchHasNewMessage();
       } catch (err) {
         console.error("Error accepting request:", err);
       }
     },
-    [fetchPendingRequests, fetchFriends]
+    [fetchPendingRequests, fetchFriends, fetchHasNewMessage]
   );
 
   const rejectRequest = useCallback(
@@ -118,57 +181,164 @@ const Friends = () => {
       fetchFriends();
       fetchPendingRequests();
       getUserFullName();
+      fetchHasNewMessage();
     }
-  }, [isAuthenticated, userId, fetchFriends, fetchPendingRequests]);
+  }, [
+    isAuthenticated,
+    userId,
+    fetchFriends,
+    fetchPendingRequests,
+    fetchHasNewMessage,
+  ]);
 
   // WebSocket connection
   useEffect(() => {
     if (!isAuthenticated || !userId) return;
 
-    const socket = new WebSocket(
-      `ws://127.0.0.1:8000/ws/friends/?user_id=${userId}`
-    );
+    let socket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let reconnectTimer = null;
+    let pingInterval = null;
 
-    wRef.current = socket;
+    const connect = () => {
+      // Close existing connection if any
+      if (socket) {
+        socket.close();
+      }
 
-    socket.onopen = () => {
-      console.log("WebSocket connected for user:", userId);
+      console.log("🔄 Connecting WebSocket...");
+      socket = new WebSocket(
+        // `ws://10.195.149.38:8000/ws/friends/?user_id=${userId}` // Change to your IP for mobile
+        `wss://alexehlebracht-chat-backend.fly.dev/ws/friends/?user_id=${userId}`
+      );
+
+      wRef.current = socket;
+
+      socket.onopen = () => {
+        console.log("✅ WebSocket connected for user:", userId);
+        reconnectAttempts = 0; // Reset on success
+
+        // Send ping every 25 seconds to keep connection alive
+        pingInterval = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+            console.log("📤 Ping sent");
+          }
+        }, 25000);
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        // Handle pong response
+        if (data.type === "pong") {
+          console.log("📥 Pong received");
+          return;
+        }
+
+        if (data.event === "online_status") {
+          fetchFriends();
+          fetchHasNewMessage();
+        }
+        if (data.event === "friend_request") {
+          fetchPendingRequests();
+          fetchHasNewMessage();
+        }
+        if (data.event === "friend_request_accepted") {
+          fetchFriends();
+          fetchPendingRequests();
+          fetchHasNewMessage();
+        }
+        console.log("WebSocket message received:", data.event);
+        if (data.event === "new_message_dot") {
+          fetchHasNewMessage();
+          console.log(friendRef.current);
+          console.log(activeTabRef.current);
+          if (friendRef.current && activeTabRef.current === "Messages") {
+            setHasNewMessageFalse(friendRef.current);
+          }
+        }
+      };
+
+      socket.onerror = (err) => {
+        console.error("❌ WebSocket error:", err);
+      };
+
+      socket.onclose = (event) => {
+        console.warn("🔴 WebSocket closed:", event.code, event.reason);
+
+        // Clear ping interval
+        if (pingInterval) {
+          clearInterval(pingInterval);
+          pingInterval = null;
+        }
+
+        // Don't reconnect if clean close
+        if (event.code === 1000) {
+          console.log("Clean disconnect");
+          return;
+        }
+
+        // Reconnect with exponential backoff
+        if (reconnectAttempts < maxReconnectAttempts) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+          reconnectAttempts++;
+
+          console.log(
+            `🔄 Reconnecting in ${delay}ms... (attempt ${reconnectAttempts}/${maxReconnectAttempts})`
+          );
+
+          reconnectTimer = setTimeout(() => {
+            connect();
+          }, delay);
+        } else {
+          console.error("❌ Max reconnection attempts reached");
+        }
+      };
+
+      setWs(socket);
     };
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+    // Initial connection
+    connect();
 
-      if (data.event === "online_status") {
-        // Just refresh the friends list
-        fetchFriends();
-      }
-      if (data.event === "friend_request") {
-        // Just refresh the pending requests list
-        fetchPendingRequests();
-      }
-      if (data.event === "friend_request_accepted") {
-        fetchFriends();
-        fetchPendingRequests();
+    // Handle page visibility (mobile going background/foreground)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log("👁️ App visible, checking connection...");
+        if (socket?.readyState !== WebSocket.OPEN) {
+          console.log("🔄 Reconnecting...");
+          connect();
+        }
       }
     };
 
-    socket.onerror = (err) => console.error("WebSocket error:", err);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    socket.onclose = (event) => {
-      console.warn("WebSocket closed:", event);
-      if (event.code !== 1000) {
-        setTimeout(() => {
-          console.log("Reconnecting WebSocket...");
-        }, 5000);
-      }
-    };
-
-    setWs(socket);
-
+    // Cleanup
     return () => {
-      socket.close(1000, "Component unmounting");
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+
+      if (pingInterval) {
+        clearInterval(pingInterval);
+      }
+
+      if (socket) {
+        socket.close(1000, "Component unmounting");
+      }
     };
-  }, [isAuthenticated, userId, fetchFriends, fetchPendingRequests]);
+  }, [
+    isAuthenticated,
+    userId,
+    fetchFriends,
+    fetchPendingRequests,
+    fetchHasNewMessage,
+  ]);
 
   // Refresh on tab change
   useEffect(() => {
@@ -176,46 +346,89 @@ const Friends = () => {
     if (activeTab === "Pending") fetchPendingRequests();
   }, [activeTab, fetchFriends, fetchPendingRequests]);
 
+  const setHasNewMessageFalse = async (friend) => {
+    try {
+      const res = await api.get(
+        `/api/change_new_message/?friend_id=${friend.user_id}`
+      );
+
+      console.log("Set has new message false response:", res);
+      if (res.status === 200) {
+        // Optionally refetch friends to update the UI
+        fetchHasNewMessage();
+        // OR update local state directly to remove the notification
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      console.log(friend);
+    }
+  };
+
   return (
     <div className="friends-whole">
       <FriendMessages
         friends={friends}
         setActiveTab={setActiveTab}
         setFriend={setFriend}
+        hasNewMessage={hasNewMessage}
+        setHasNewMessageFalse={setHasNewMessageFalse}
+        isMessagesHidden={isMessagesHidden}
+        setIsMessagesHidden={setIsMessagesHidden}
       />
       <div className="friends-container">
         <nav className="friends-tabs">
-          <div className="friends-header">
-            <img src={FriendsImage} alt="Friends" />
-            Friends
+          {isTablet && (
+            <div className="friends-header tablet">
+              <img
+                src={MessageImage}
+                alt="Friends"
+                className="friends-icon"
+                onClick={() => setIsMessagesHidden(true)}
+              />
+            </div>
+          )}
+          <div className="friends-nav-center">
+            <div className="friends-header">
+              <img src={FriendsImage} alt="Friends" />
+              Friends
+            </div>
+            {["Online", "All", "Pending", "Add Friend"].map((tab) => (
+              <button
+                key={tab}
+                className={`
+                ${activeTab === tab ? "friends-active" : ""}
+                ${tab === "Add Friend" ? "add-friend-class" : ""}
+              `}
+                onClick={() => setActiveTab(tab)}
+                onMouseEnter={
+                  tab === "Add Friend"
+                    ? () => setIsAddNewHovered(true)
+                    : undefined
+                }
+                onMouseLeave={
+                  tab === "Add Friend"
+                    ? () => setIsAddNewHovered(false)
+                    : undefined
+                }
+              >
+                {tab}
+                {tab === "Add Friend" && (
+                  <img
+                    src={
+                      isAddNewHovered && activeTab != "Add Friend"
+                        ? AddFriendsB
+                        : AddFriendsW
+                    }
+                  />
+                )}
+              </button>
+            ))}
           </div>
-          {["Online", "All", "Pending", "Add Friend"].map((tab) => (
-            <button
-              key={tab}
-              className={activeTab === tab ? "friends-active" : ""}
-              onClick={() => setActiveTab(tab)}
-              onMouseEnter={
-                tab === "Add Friend"
-                  ? () => setIsAddNewHovered(true)
-                  : undefined
-              }
-              onMouseLeave={
-                tab === "Add Friend"
-                  ? () => setIsAddNewHovered(false)
-                  : undefined
-              }
-            >
-              {tab}
-              {tab === "Add Friend" && (
-                <img src={isAddNewHovered ? AddFriendsB : AddFriendsW} />
-              )}
-            </button>
-          ))}
           <div
             className="friends-header-name"
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
           >
-            <div>
+            <div className="friends-header-username">
               {isAuthenticated ? `${firstName} ${lastName}` : "Not logged in"}
             </div>
             <img src={profilePic} alt="Profile" />
@@ -240,6 +453,8 @@ const Friends = () => {
                     profile={f}
                     setActiveTab={setActiveTab}
                     setFriend={setFriend}
+                    setHasNewMessageFalse={setHasNewMessageFalse}
+                    setIsMessagesHidden={setIsMessagesHidden}
                   />
                 ))}
             </ul>
@@ -253,6 +468,8 @@ const Friends = () => {
                   profile={f}
                   setActiveTab={setActiveTab}
                   setFriend={setFriend}
+                  setHasNewMessageFalse={setHasNewMessageFalse}
+                  setIsMessagesHidden={setIsMessagesHidden}
                 />
               ))}
             </ul>
@@ -274,8 +491,13 @@ const Friends = () => {
           )}
 
           {activeTab === "Add Friend" && <SearchProfiles />}
-          {activeTab === "Messages" && (
+          {activeTab === "Messages" && friend && (
             <Messages friend={friend} currentUserId={userId} ws={wRef} />
+          )}
+          {activeTab === "Messages" && !friend && (
+            <div className="no-friend-selected">
+              <p>Select a friend to start messaging</p>
+            </div>
           )}
         </div>
       </div>

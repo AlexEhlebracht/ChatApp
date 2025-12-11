@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import "../styles/Messages.css";
 import api from "../api";
 
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm"; // GitHub Flavored Markdown (tables, strikethrough, etc.)
+import rehypeKatex from "rehype-katex";
+import rehypeHighlight from "rehype-highlight"; // Code syntax highlighting
+import "katex/dist/katex.min.css";
+import "highlight.js/styles/github-dark.css"; // Code highlighting theme
+
 const Messages = ({ friend, currentUserId, ws }) => {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -11,7 +19,6 @@ const Messages = ({ friend, currentUserId, ws }) => {
   const [shouldScroll, setShouldScroll] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [friendTyping, setFriendTyping] = useState(false);
-
   const GROUP_THRESHOLD = 2 * 60 * 1000; // 2 minutes
 
   const shouldShowTimestamp = (msg, nextMsg) => {
@@ -169,14 +176,28 @@ const Messages = ({ friend, currentUserId, ws }) => {
         console.error("Error:", err);
       }
     }
+    try {
+      await api.get(
+        `/api/change_new_message_true/?friend_id=${friend.user_id}`
+      );
+    } catch (err) {
+      console.error("Error updating new message status:", err);
+    }
 
     setText("");
   };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+      // Check if it's likely a physical keyboard
+      // Virtual keyboards on mobile typically have inputMode="text"
+      // and the keyboard event properties are different
+      const isLikelyPhysicalKeyboard = window.innerWidth > 600;
+
+      if (isLikelyPhysicalKeyboard) {
+        e.preventDefault();
+        sendMessage();
+      }
     }
   };
 
@@ -227,7 +248,40 @@ const Messages = ({ friend, currentUserId, ws }) => {
                   msg.sender == currentUserId ? "sent" : "received"
                 }`}
               >
-                <p className="message-text-content">{msg.content}</p>
+                <div className="message-text-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath, remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                    components={{
+                      a: ({ node, ...props }) => (
+                        <a
+                          {...props}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ),
+                      code: ({
+                        node,
+                        inline,
+                        className,
+                        children,
+                        ...props
+                      }) => {
+                        return inline ? (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
+                </div>
                 {showTimestamp && (
                   <span className="message-timestamp">
                     {formatTimestamp(msg.timestamp)}

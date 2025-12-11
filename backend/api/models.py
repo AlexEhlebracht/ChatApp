@@ -1,13 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
+import os
 
+
+def profile_pic_upload_to(instance, filename):
+    # Get the file extension
+    ext = filename.split('.')[-1]
+    # Generate a new unique filename
+    filename = f"{uuid.uuid4()}.{ext}"
+    # Save it in the profile_pics folder
+    return os.path.join('profile_pics', filename)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to=profile_pic_upload_to, blank=True, null=True)
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(default=timezone.now)
 
@@ -23,6 +33,8 @@ class FriendRequest(models.Model):
         choices=[("pending", "Pending"), ("accepted", "Accepted"), ("rejected", "Rejected")],
         default="pending"
     )
+    from_new_message = models.BooleanField(default=False)
+    to_new_message = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

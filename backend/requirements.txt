@@ -11,3 +11,5 @@ python-dotenv
 Pillow
 channels
 channels_redis
+django-environ
+daphne

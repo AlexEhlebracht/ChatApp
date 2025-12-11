@@ -10,6 +10,9 @@ from .views import (
     OutgoingFriendRequestsView,
     FriendsListView,
     UserSearchView,
+    FriendsListWithMessagesView,
+    ChangeNewMessageView,
+    ChangeNewMessageTrueView
 )
 
 urlpatterns = [
@@ -23,4 +26,7 @@ urlpatterns = [
     path("friends/", FriendsListView.as_view(), name="friends-list"),
     path("messages/<int:friend_id>/", MessageListView.as_view(), name="message-list"),
     path("messages/", MessageCreateView.as_view(), name="message-create"),
+    path("has_new_message/", FriendsListWithMessagesView.as_view(), name="has-new-message"),
+    path('change_new_message/', ChangeNewMessageView.as_view(), name='change_new_message'),
+    path('change_new_message_true/', ChangeNewMessageTrueView.as_view(), name='change_new_message_true'),
 ]

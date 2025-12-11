@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from .serializers import UserSerializer, ProfileSerializer, FriendRequestSerializer, MessageSerializer
-from .models import HasNewMessage, Profile, FriendRequest, Message
+from .models import Profile, FriendRequest, Message
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from channels.layers import get_channel_layer
@@ -12,6 +12,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django.db.models import Q
+from datetime import datetime, timezone as dt_timezone
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -200,6 +201,189 @@ class FriendsListView(generics.ListAPIView):
             to_user=self.request.user, status="accepted"
         ).values_list("from_user", flat=True)
         return Profile.objects.filter(user__id__in=list(sent) + list(received))
+    
+
+class FriendsListWithMessagesView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProfileSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Get all accepted friend requests
+        sent = FriendRequest.objects.filter(
+            from_user=user,
+            status="accepted"
+        ).select_related('to_user__profile')
+        
+        received = FriendRequest.objects.filter(
+            to_user=user,
+            status="accepted"
+        ).select_related('from_user__profile')
+        
+        # Build a list of friends with new message flags and last message time
+        friends_data = []
+        
+        # For requests we sent, check to_new_message
+        for req in sent:
+            friend_user = req.to_user
+            # Get most recent message between user and this friend (both directions)
+            last_message = Message.objects.filter(
+                Q(sender=user, receiver=friend_user) | Q(sender=friend_user, receiver=user)
+            ).order_by('-timestamp').first()
+            
+            friends_data.append({
+                'profile': friend_user.profile,
+                'has_new_message': req.to_new_message,
+                'last_message_time': last_message.timestamp if last_message else None
+            })
+        
+        # For requests we received, check from_new_message
+        for req in received:
+            friend_user = req.from_user
+            # Get most recent message between user and this friend (both directions)
+            last_message = Message.objects.filter(
+                Q(sender=user, receiver=friend_user) | Q(sender=friend_user, receiver=user)
+            ).order_by('-timestamp').first()
+            
+            friends_data.append({
+                'profile': friend_user.profile,
+                'has_new_message': req.from_new_message,
+                'last_message_time': last_message.timestamp if last_message else None
+            })
+        
+        # Sort by most recent message first (None values go to end)
+        from datetime import datetime
+        from django.utils import timezone
+        friends_data.sort(key=lambda x: x['last_message_time'] or datetime.min.replace(tzinfo=dt_timezone.utc), reverse=True)
+        
+        # Store in request for use in serializer
+        self.friends_data = friends_data
+        
+        # Return profiles in the sorted order
+        profile_ids = [fd['profile'].id for fd in friends_data]
+        
+        # Preserve the order using django's Case/When
+        from django.db.models import Case, When, IntegerField
+        
+        preserved_order = Case(
+            *[When(id=id, then=pos) for pos, id in enumerate(profile_ids)],
+            output_field=IntegerField()
+        )
+        
+        return Profile.objects.filter(id__in=profile_ids).order_by(preserved_order)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Create a mapping of profile_id to has_new_message
+        message_map = {fd['profile'].id: fd['has_new_message'] 
+                      for fd in self.friends_data}
+        
+        serializer = self.get_serializer(queryset, many=True)
+        
+        # Add has_new_message to each serialized profile
+        response_data = []
+        for profile_data in serializer.data:
+            profile_id = profile_data['id']
+            response_data.append({
+                **profile_data,
+                'has_new_message': message_map.get(profile_id, False)
+            })
+        
+        return Response(response_data)
+    
+
+class ChangeNewMessageView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        friend_id = request.query_params.get('friend_id')
+        
+        if not friend_id:
+            return Response({'error': 'friend_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        current_user = request.user
+        
+        # Find the FriendRequest between current user and friend
+        # Check both directions since either could have sent the request
+        friend_request = FriendRequest.objects.filter(
+            from_user=friend_id,
+            to_user=current_user,
+            status='accepted'
+        ).first()
+        
+        if friend_request:
+            # They sent the request, so mark from_new_message as False
+            friend_request.from_new_message = False
+            friend_request.save()
+        else:
+            # We sent the request, so mark to_new_message as False
+            friend_request = FriendRequest.objects.filter(
+                from_user=current_user,
+                to_user=friend_id,
+                status='accepted'
+            ).first()
+            
+            if friend_request:
+                friend_request.to_new_message = False
+                friend_request.save()
+            else:
+                return Response({'error': 'Friend request not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({'success': True}, status=status.HTTP_200_OK)
+    
+    
+class ChangeNewMessageTrueView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        friend_id = request.query_params.get('friend_id')
+        
+        if not friend_id:
+            return Response({'error': 'friend_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        current_user = request.user
+        
+        # Find the FriendRequest between current user and friend
+        # Check both directions since either could have sent the request
+        friend_request = FriendRequest.objects.filter(
+            from_user=friend_id,
+            to_user=current_user,
+            status='accepted'
+        ).first()
+        
+        if friend_request:
+            # They sent the original request, so we mark to_new_message as True
+            # (because WE are sending a message TO them)
+            friend_request.to_new_message = True
+            friend_request.save()
+        else:
+            # We sent the original request, so mark from_new_message as True
+            # (because WE are sending a message FROM us)
+            friend_request = FriendRequest.objects.filter(
+                from_user=current_user,
+                to_user=friend_id,
+                status='accepted'
+            ).first()
+            
+            if friend_request:
+                friend_request.from_new_message = True
+                friend_request.save()
+            else:
+                return Response({'error': 'Friend request not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        channel_layer = get_channel_layer()
+
+        async_to_sync(channel_layer.group_send)(
+            f"user_{friend_id}",
+            {
+                "type": "new_message_dot",
+                "event": "new_message_dot"
+            }
+        )
+        
+        return Response({'success': True}, status=status.HTTP_200_OK)
     
 
 class MessageListView(generics.ListAPIView):

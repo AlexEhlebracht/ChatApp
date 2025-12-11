@@ -17,4 +17,5 @@ html,
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: var(--background-color);
 }

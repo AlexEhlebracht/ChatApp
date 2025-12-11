@@ -1,6 +1,12 @@
 import React from "react";
 
-const Friend = ({ profile, setActiveTab, setFriend }) => {
+const Friend = ({
+  profile,
+  setActiveTab,
+  setFriend,
+  setHasNewMessageFalse,
+  setIsMessagesHidden,
+}) => {
   function timeAgo(dateString) {
     const now = new Date();
     const past = new Date(dateString);
@@ -22,6 +28,8 @@ const Friend = ({ profile, setActiveTab, setFriend }) => {
       onClick={() => {
         setActiveTab("Messages");
         setFriend(profile);
+        setHasNewMessageFalse(profile);
+        setIsMessagesHidden(false);
       }}
     >
       <div

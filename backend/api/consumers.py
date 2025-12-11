@@ -47,6 +47,10 @@ class FriendConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         print("WS received:", data)
 
+        if data.get("type") == "ping":
+            await self.send(text_data=json.dumps({"type": "pong"}))
+            return
+
         if data.get("event") == "send_message":
             receiver_id = data.get("receiver_id")
             content = data.get("content")
@@ -127,6 +131,11 @@ class FriendConsumer(AsyncWebsocketConsumer):
             "user_id": event["user_id"],
             "username": event["username"],
             "is_online": event["is_online"]
+        }))
+
+    async def new_message_dot(self, event):
+        await self.send(text_data=json.dumps({
+            "event": "new_message_dot",
         }))
 
     @database_sync_to_async
