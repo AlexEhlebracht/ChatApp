@@ -10,7 +10,7 @@ const Friend = ({
   function timeAgo(dateString) {
     const now = new Date();
     const past = new Date(dateString);
-    const diffMs = now - past; // difference in milliseconds
+    const diffMs = now - past; // difference in milliseconds.
 
     const minutes = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMs / 3600000);
