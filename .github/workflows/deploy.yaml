@@ -69,7 +69,7 @@ jobs:
       - name: Setup SSH config
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           echo "Host ssh.alexehlebracht.com
             ProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h
@@ -79,4 +79,4 @@ jobs:
 
       - name: Deploy backend to server
         run: |
-          ssh ssh.alexehlebracht.com "cd /var/www/chat && git pull origin main && cd backend && pip install -r requirements.txt --break-system-packages && python manage.py migrate"
+          ssh ssh.alexehlebracht.com "cd /var/www/chat && git pull origin main && cd backend && source venv/bin/activate && pip install -r requirements.txt && python manage.py migrate && sudo systemctl restart daphne"
