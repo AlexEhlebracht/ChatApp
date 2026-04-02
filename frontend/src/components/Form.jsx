@@ -105,7 +105,7 @@ function Form({ route, method }) {
     <div className="form-wrapper">
       <TypewriterEffect />
       <form onSubmit={handleSubmit} className="form-container">
-        <h1>{name}</h1>
+        <h1>{name} bruh</h1>
         {userError && <p className="error-message">{userError}</p>}
         <input
           className="form-input"
