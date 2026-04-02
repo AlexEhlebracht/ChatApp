@@ -134,7 +134,7 @@ const Friends = () => {
         console.error("Error accepting request:", err);
       }
     },
-    [fetchPendingRequests, fetchFriends, fetchHasNewMessage]
+    [fetchPendingRequests, fetchFriends, fetchHasNewMessage],
   );
 
   const rejectRequest = useCallback(
@@ -146,7 +146,7 @@ const Friends = () => {
         console.error("Error rejecting request:", err);
       }
     },
-    [fetchPendingRequests]
+    [fetchPendingRequests],
   );
 
   const getUserFullName = useCallback(async () => {
@@ -210,7 +210,7 @@ const Friends = () => {
       console.log("🔄 Connecting WebSocket...");
       socket = new WebSocket(
         // `ws://10.195.149.38:8000/ws/friends/?user_id=${userId}` // Change to your IP for mobile
-        `wss://alexehlebracht-chat-backend.fly.dev/ws/friends/?user_id=${userId}`
+        `wss://api.alexehlebracht.com/chat/ws/friends/?user_id=${userId}`,
       );
 
       wRef.current = socket;
@@ -286,7 +286,7 @@ const Friends = () => {
           reconnectAttempts++;
 
           console.log(
-            `🔄 Reconnecting in ${delay}ms... (attempt ${reconnectAttempts}/${maxReconnectAttempts})`
+            `🔄 Reconnecting in ${delay}ms... (attempt ${reconnectAttempts}/${maxReconnectAttempts})`,
           );
 
           reconnectTimer = setTimeout(() => {
@@ -349,7 +349,7 @@ const Friends = () => {
   const setHasNewMessageFalse = async (friend) => {
     try {
       const res = await api.get(
-        `/api/change_new_message/?friend_id=${friend.user_id}`
+        `/api/change_new_message/?friend_id=${friend.user_id}`,
       );
 
       console.log("Set has new message false response:", res);
