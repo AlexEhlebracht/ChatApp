@@ -125,11 +125,12 @@ AWS_ACCESS_KEY_ID = os.environ.get('MINIO_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.environ.get('MINIO_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = 'chat-media'
 AWS_S3_ENDPOINT_URL = 'http://192.168.1.120:9000'
+AWS_S3_CUSTOM_DOMAIN = 'media.alexehlebracht.com'
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = 'public-read'
 AWS_S3_VERIFY = False
 AWS_QUERYSTRING_AUTH = False
-MEDIA_URL = 'http://192.168.1.120:9000/chat-media/'
+MEDIA_URL = 'https://media.alexehlebracht.com/chat-media/'
 
 STORAGES = {
     "default": {
